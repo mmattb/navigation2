@@ -36,6 +36,8 @@ LifecycleNode::LifecycleNode(
       bond::msg::Constants::DISABLE_HEARTBEAT_TIMEOUT_PARAM, true));
 
   printLifecycleNodeNotification();
+
+  register_rcl_preshutdown_callback();
 }
 
 LifecycleNode::~LifecycleNode()
@@ -47,6 +49,13 @@ LifecycleNode::~LifecycleNode()
   {
     on_deactivate(get_current_state());
     on_cleanup(get_current_state());
+  }
+
+  if (rcl_preshutdown_cb_handle_) {
+    rclcpp::Context::SharedPtr context = get_node_base_interface()->get_context();
+    context->remove_pre_shutdown_callback(*(rcl_preshutdown_cb_handle_.get()));
+    rcl_preshutdown_cb_handle_.reset();
+    destroyBond();
   }
 }
 
@@ -62,6 +71,24 @@ void LifecycleNode::createBond()
   bond_->setHeartbeatPeriod(0.10);
   bond_->setHeartbeatTimeout(4.0);
   bond_->start();
+}
+
+void LifecycleNode::on_rcl_preshutdown()
+{
+  RCLCPP_INFO(
+    get_logger(), "Running Nav2 LifecycleNode rcl preshutdown (%s)",
+    this->get_name());
+  destroyBond();
+}
+
+void LifecycleNode::register_rcl_preshutdown_callback()
+{
+  rclcpp::Context::SharedPtr context = get_node_base_interface()->get_context();
+
+  rcl_preshutdown_cb_handle_ = std::make_unique<rclcpp::PreShutdownCallbackHandle>(
+    context->add_pre_shutdown_callback(
+      std::bind(&LifecycleNode::on_rcl_preshutdown, this))
+  );
 }
 
 void LifecycleNode::destroyBond()
