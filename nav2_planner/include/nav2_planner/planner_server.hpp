@@ -190,6 +190,13 @@ protected:
   void computePlan();
 
   /**
+   * @brief Perform destruction activity also performed by rcl preshutdown.
+   */
+  void prepDestruction();
+
+  void on_rcl_preshutdown() override;
+
+  /**
    * @brief The action server callback which calls planner to get the path
    * ComputePathThroughPoses
    */

@@ -67,10 +67,23 @@ PlannerServer::PlannerServer(const rclcpp::NodeOptions & options)
   costmap_thread_ = std::make_unique<nav2_util::NodeThread>(costmap_ros_);
 }
 
-PlannerServer::~PlannerServer()
+void
+PlannerServer::prepDestruction()
 {
   planners_.clear();
   costmap_thread_.reset();
+}
+
+PlannerServer::~PlannerServer()
+{
+  prepDestruction();
+}
+
+
+void PlannerServer::on_rcl_preshutdown()
+{
+  prepDestruction();
+  LifecycleNode::on_rcl_preshutdown();
 }
 
 nav2_util::CallbackReturn
