@@ -67,23 +67,14 @@ PlannerServer::PlannerServer(const rclcpp::NodeOptions & options)
   costmap_thread_ = std::make_unique<nav2_util::NodeThread>(costmap_ros_);
 }
 
-void
-PlannerServer::prepDestruction()
-{
-  planners_.clear();
-  costmap_thread_.reset();
-}
-
 PlannerServer::~PlannerServer()
 {
-  prepDestruction();
-}
-
-
-void PlannerServer::on_rcl_preshutdown()
-{
-  prepDestruction();
-  LifecycleNode::on_rcl_preshutdown();
+  /*
+   * Backstop ensuring this state is destroyed, even if deactivate/cleanup are
+   * never called.
+   */
+  planners_.clear();
+  costmap_thread_.reset();
 }
 
 nav2_util::CallbackReturn
@@ -237,7 +228,9 @@ PlannerServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   for (it = planners_.begin(); it != planners_.end(); ++it) {
     it->second->cleanup();
   }
+
   planners_.clear();
+  costmap_thread_.reset();
   costmap_ = nullptr;
   return nav2_util::CallbackReturn::SUCCESS;
 }
