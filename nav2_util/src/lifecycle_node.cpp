@@ -44,6 +44,7 @@ LifecycleNode::~LifecycleNode()
 {
   RCLCPP_INFO(get_logger(), "Destroying");
   // In case this lifecycle node wasn't properly shut down, do it here
+
   if (get_current_state().id() ==
     lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
   {
@@ -78,6 +79,26 @@ void LifecycleNode::on_rcl_preshutdown()
   RCLCPP_INFO(
     get_logger(), "Running Nav2 LifecycleNode rcl preshutdown (%s)",
     this->get_name());
+
+  /*
+   * In case this lifecycle node wasn't properly shut down, do it here.
+   * We will give the user some ability to clean up properly here, but it's
+   * best effort; i.e. we aren't trying to account for all possible states.
+   */
+  if (get_current_state().id() ==
+    lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE)
+  {
+    RCLCPP_INFO(get_logger(), "on_deactivate");
+    on_deactivate(get_current_state());
+    RCLCPP_INFO(get_logger(), "on_cleanup");
+    on_cleanup(get_current_state());
+  }
+
+  /*
+   * A child class may destroyBond(), but we do it here in case it didn't.
+   * We don't want to *require* the author of the child class to know they
+   * need to clean the bond up.
+   */
   destroyBond();
 }
 

@@ -276,6 +276,7 @@ ControllerServer::on_cleanup(const rclcpp_lifecycle::State & /*state*/)
   // Release any allocated resources
   action_server_.reset();
   odom_sub_.reset();
+  costmap_thread_.reset();
   vel_publisher_.reset();
   speed_limit_sub_.reset();
 
